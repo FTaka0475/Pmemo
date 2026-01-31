@@ -36,10 +36,10 @@
             
             //入力されたら自動保存
             memoArea.addEventListener("input", () =>{
-                ocalStorage.setItem("pmemo_text", memoArea.value);
+                localStorage.setItem("pmemo_text", memoArea.value);
                 status.textContent = "保存しました";
             });
-            
+
         </script>
     </body>
 </html>
