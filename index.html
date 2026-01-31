@@ -15,27 +15,31 @@
                 height: 150px;
                 font-size: 16px;
             }
-            button{
-                margin-top: 10px;
-                padding: 10px;
-                font-size: 16px;
-                width: 100%;
+            .status{
+                margin-top: 8px;
+                font-size: 12px;
+                color: #666;
             }
         </style>
     </head>
     <body>
         <h1>メモ</h1>
         <textarea id="memo" placeholder="メモ"></textarea></textarea>
-        <button onclick="saveMemo()">保存</button>
+        <div class="status" id="status">未保存</div>>
 
         <script>
             const memoArea = document.getElementById("memo");
+            const status = document.getElementById("status");
+
+            //初期読み込み
             memoArea.value = localStorage.getItem("Pmemo_text") || "";
             
-            function saveMemo(){
-                localStorage.setItem("pmemo_text", memoArea.value);
-                alert("保存しました");
-            }
+            //入力されたら自動保存
+            memoArea.addEventListener("input", () =>{
+                ocalStorage.setItem("pmemo_text", memoArea.value);
+                status.textContent = "保存しました";
+            });
+            
         </script>
     </body>
 </html>
