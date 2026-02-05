@@ -109,13 +109,13 @@
 <body>
 
   <div id="sidebar">
-    <h2>フォルダ</h2>
-    <ul id="categoryList">
-      <li class="active" data-category="memo">メモ</li>
-      <li data-category="illustration">イラスト</li>
-      <li data-category="pachislo">パチスロ</li>
-    </ul>
-  </div>
+  <h2 id="folderTitle">フォルダ ▼</h2>
+  <ul id="categoryList">
+    <li class="active" data-category="memo">メモ</li>
+    <li data-category="illustration">イラスト</li>
+    <li data-category="pachislo">パチスロ</li>
+  </ul>
+</div>
 
   <div id="content">
     <header>
@@ -142,6 +142,8 @@
     const memoArea = document.getElementById('memoArea');
     const status = document.getElementById('status');
     const editorTitle = document.getElementById('editorTitle');
+    const folderTitle = document.getElementById('folderTitle');
+    const categoryList = document.getElementById('categoryList');
 
     let currentCategory = 'memo';
     let currentNoteId = null;
@@ -203,6 +205,16 @@
       saveNotes(currentCategory, notes);
       renderNotes();
       openEditor(id);
+    });
+
+    folderTitle.addEventListener('click', () => {
+      if(categoryList.style.display === 'none'){
+        categoryList.style.display = 'block';
+        folderTitle.textContent = 'フォルダ ▼';
+      } else {
+        categoryList.style.display = 'none';
+        folderTitle.textContent = 'フォルダ ▶';
+      }
     });
 
     // カテゴリ切替
