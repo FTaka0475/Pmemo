@@ -4,43 +4,222 @@
   <meta charset="UTF-8">
   <title>Pmemo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
-      font-family: sans-serif;
-      padding: 16px;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      height: 100vh;
     }
-    textarea {
+
+    /* サイドバー */
+    #sidebar {
+      width: 200px;
+      background: #f9f9f9;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    #sidebar h2 {
+      margin: 0 0 10px 0;
+      text-align: center;
+    }
+    #sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #sidebar li {
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    #sidebar li:hover, #sidebar li.active {
+      background: #e0e0e0;
+    }
+
+    /* メモエリア */
+    #content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    #content header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #notes {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .note-card {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .note-card:hover {
+      background: #f0f0f0;
+    }
+
+    /* 編集エリア */
+    #editor {
+      display: none;
+      flex-direction: column;
+    }
+    #editor textarea {
       width: 100%;
       height: 150px;
       font-size: 16px;
+      margin-top: 10px;
+      padding: 8px;
+      box-sizing: border-box;
     }
-    .status {
-      margin-top: 8px;
+    #editor .status {
       font-size: 12px;
       color: #666;
+      margin-top: 5px;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: #fff;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 
 <body>
-  <h1>Pmemo</h1>
 
-  <textarea id="memo" placeholder="入力したら自動で保存されます（#タグOK）"></textarea>
-  <div class="status" id="status">未保存</div>
+  <div id="sidebar">
+    <h2>フォルダ</h2>
+    <ul id="categoryList">
+      <li class="active" data-category="memo">メモ</li>
+      <li data-category="illustration">イラスト</li>
+      <li data-category="pachislo">パチスロ</li>
+    </ul>
+  </div>
+
+  <div id="content">
+    <header>
+      <h2>メモ一覧</h2>
+      <button id="newNote">＋ 新規メモ</button>
+    </header>
+
+    <div id="notes">
+      <!-- メモカードがここに追加される -->
+    </div>
+
+    <div id="editor">
+      <h3 id="editorTitle"></h3>
+      <textarea id="memoArea"></textarea>
+      <div class="status" id="status">未保存</div>
+    </div>
+  </div>
 
   <script>
-    const memoArea = document.getElementById("memo");
-    const status = document.getElementById("status");
+    const categories = document.querySelectorAll('#categoryList li');
+    const notesContainer = document.getElementById('notes');
+    const newNoteBtn = document.getElementById('newNote');
+    const editor = document.getElementById('editor');
+    const memoArea = document.getElementById('memoArea');
+    const status = document.getElementById('status');
+    const editorTitle = document.getElementById('editorTitle');
 
-    // 初期読み込み
-    memoArea.value = localStorage.getItem("pmemo_text") || "";
+    let currentCategory = 'memo';
+    let currentNoteId = null;
 
-    // 入力されたら自動保存
-    memoArea.addEventListener("input", () => {
-      localStorage.setItem("pmemo_text", memoArea.value);
-      status.textContent = "保存しました";
+    // メモをlocalStorageに保存するための関数
+    function saveNotes(category, notes) {
+      localStorage.setItem('pmemo_notes_' + category, JSON.stringify(notes));
+    }
+
+    function loadNotes(category) {
+      return JSON.parse(localStorage.getItem('pmemo_notes_' + category) || '[]');
+    }
+
+    function renderNotes() {
+      const notes = loadNotes(currentCategory);
+      notesContainer.innerHTML = '';
+      notes.forEach(note => {
+        const div = document.createElement('div');
+        div.className = 'note-card';
+        div.innerHTML = `<strong>${note.title}</strong><p>${note.content.slice(0, 50)}</p>`;
+        div.addEventListener('click', () => openEditor(note.id));
+        notesContainer.appendChild(div);
+      });
+    }
+
+    function openEditor(noteId) {
+      const notes = loadNotes(currentCategory);
+      const note = notes.find(n => n.id === noteId);
+      if (!note) return;
+      currentNoteId = note.id;
+      editor.style.display = 'flex';
+      editorTitle.textContent = note.title;
+      memoArea.value = note.content;
+      status.textContent = '未保存';
+    }
+
+    function saveCurrentNote() {
+      if(currentNoteId === null) return;
+      const notes = loadNotes(currentCategory);
+      const note = notes.find(n => n.id === currentNoteId);
+      if(note){
+        note.content = memoArea.value;
+        saveNotes(currentCategory, notes);
+        status.textContent = '保存しました';
+        renderNotes();
+      }
+    }
+
+    // 入力時に自動保存
+    memoArea.addEventListener('input', saveCurrentNote);
+
+    // 新規メモ作成
+    newNoteBtn.addEventListener('click', () => {
+      const title = prompt('メモのタイトルを入力');
+      if(!title) return;
+      const notes = loadNotes(currentCategory);
+      const id = Date.now();
+      notes.push({id, title, content: ''});
+      saveNotes(currentCategory, notes);
+      renderNotes();
+      openEditor(id);
     });
+
+    // カテゴリ切替
+    categories.forEach(cat => {
+      cat.addEventListener('click', () => {
+        categories.forEach(c => c.classList.remove('active'));
+        cat.classList.add('active');
+        currentCategory = cat.dataset.category;
+        currentNoteId = null;
+        editor.style.display = 'none';
+        renderNotes();
+      });
+    });
+
+    // 初期表示
+    renderNotes();
+
   </script>
 </body>
 </html>
